@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>آگاه کراودفاند — رصد تامین مالی جمعی فرابورس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0f2547;
+    --gold:    #c8972a;
+    --gold-lt: #f5e6c8;
+    --green:   #0a7c5c;
+    --green-lt:#d1f0e6;
+    --amber:   #b45309;
+    --amber-lt:#fef3c7;
+    --gray-50: #f8f9fa;
+    --gray-100:#f1f3f5;
+    --gray-200:#e9ecef;
+    --gray-400:#adb5bd;
+    --gray-600:#6c757d;
+    --gray-800:#343a40;
+    --white:   #ffffff;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+    --radius:  12px;
+    --font: 'Vazirmatn', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray-50);
+    color: var(--gray-800);
+    direction: rtl;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.18);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-logo {
+    width: 38px; height: 38px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: var(--navy);
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 17px; font-weight: 700; line-height: 1.3; }
+  .header-sub   { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; }
+  .header-meta  { font-size: 12px; color: rgba(255,255,255,.7); text-align: left; direction: ltr; }
+  .header-meta span { display: block; }
+  .header-meta .lbl { color: rgba(255,255,255,.45); font-size: 11px; }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 74px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--white);
+    border-left: 1px solid var(--gray-200);
+    padding: 24px 16px;
+    position: sticky;
+    top: 74px;
+    height: calc(100vh - 74px);
+    overflow-y: auto;
+  }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-label {
+    font-size: 11px; font-weight: 600; color: var(--gray-600);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  /* Search */
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%; padding: 9px 36px 9px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px; font-family: var(--font);
+    font-size: 13px; background: var(--gray-50);
+    color: var(--gray-800); direction: rtl; outline: none;
+    transition: border-color .15s;
+  }
+  .search-wrap input:focus { border-color: var(--navy); background: var(--white); }
+  .search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--gray-400); font-size: 14px; pointer-events: none;
+  }
+
+  /* Filter controls */
+  .filter-group { margin-bottom: 14px; }
+  .filter-group label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--gray-600); margin-bottom: 5px;
+  }
+  .filter-group select,
+  .filter-group input[type="text"] {
+    width: 100%; padding: 8px 10px;
+    border: 1.5px solid var(--gray-200); border-radius: 8px;
+    font-family: var(--font); font-size: 13px;
+    background: var(--gray-50); color: var(--gray-800);
+    direction: rtl; outline: none; transition: border-color .15s;
+    appearance: none;
+  }
+  .filter-group select:focus,
+  .filter-group input:focus { border-color: var(--navy); background: var(--white); }
+
+  .filter-row { display: flex; gap: 6px; }
+  .filter-row input { flex: 1; }
+
+  /* Checkbox */
+  .check-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--gray-800); cursor: pointer;
+    padding: 6px 0;
+  }
+  .check-label input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--navy); cursor: pointer;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 9px 16px; border-radius: 8px;
+    font-family: var(--font); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .15s; border: none; width: 100%;
+  }
+  .btn-primary {
+    background: var(--navy); color: var(--white);
+  }
+  .btn-primary:hover { background: #1a3a6b; }
+  .btn-gold {
+    background: var(--gold); color: var(--navy);
+  }
+  .btn-gold:hover { background: #b5821f; }
+  .btn-outline {
+    background: transparent; color: var(--gray-600);
+    border: 1.5px solid var(--gray-200);
+  }
+  .btn-outline:hover { border-color: var(--navy); color: var(--navy); }
+  .btn + .btn { margin-top: 8px; }
+
+  /* Unseen badge */
+  .unseen-banner {
+    background: var(--gold-lt); border: 1px solid var(--gold);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 12px; color: var(--amber);
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .unseen-banner span { font-weight: 600; }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    padding: 24px 28px;
+    min-width: 0;
+  }
+
+  /* KPI Cards */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .kpi-label { font-size: 11px; color: var(--gray-600); font-weight: 500; margin-bottom: 8px; }
+  .kpi-val   { font-size: 28px; font-weight: 700; line-height: 1; color: var(--navy); }
+  .kpi-card.green .kpi-val { color: var(--green); }
+  .kpi-card.amber .kpi-val { color: var(--amber); }
+  .kpi-card.ts .kpi-val    { font-size: 12px; color: var(--gray-600); line-height: 1.7; padding-top: 4px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+  }
+  .result-pill {
+    background: #eff6ff; color: #1d4ed8;
+    font-size: 12px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px;
+    display: inline-block;
+  }
+  .pagination {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pagination button {
+    padding: 6px 14px; border-radius: 6px;
+    border: 1.5px solid var(--gray-200);
+    font-family: var(--font); font-size: 12px; font-weight: 600;
+    background: var(--white); color: var(--gray-800);
+    cursor: pointer; transition: all .12s;
+  }
+  .pagination button:hover:not(:disabled) { border-color: var(--navy); color: var(--navy); }
+  .pagination button:disabled { opacity: .4; cursor: default; }
+  .pagination .page-info { font-size: 12px; color: var(--gray-600); white-space: nowrap; }
+
+  /* ── PROJECT CARDS ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .15s;
+  }
+  .card:hover { box-shadow: var(--shadow-md); }
+  .card.is-new {
+    border-right: 4px solid var(--gold);
+    background: #fffdf5;
+  }
+
+  .card-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 12px;
+    margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .card-title-row {
+    display: flex; align-items: center;
+    gap: 8px; flex-wrap: wrap; min-width: 0;
+  }
+  .card-title {
+    font-size: 16px; font-weight: 700;
+    color: var(--navy); line-height: 1.4;
+  }
+  .badge-new {
+    background: var(--gold); color: var(--white);
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+  }
+  .badge-status {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .s-active { background: var(--green-lt); color: var(--green); }
+  .s-other  { background: var(--gray-100); color: var(--gray-600); }
+
+  .card-meta {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    font-size: 12px; color: var(--gray-600);
+    margin-bottom: 10px;
+  }
+  .card-meta a { color: #2563eb; text-decoration: none; }
+  .card-meta a:hover { text-decoration: underline; }
+  .meta-item { display: flex; align-items: center; gap: 4px; }
+
+  .card-desc {
+    font-size: 13px; color: #374151;
+    line-height: 1.9;
+    border-top: 1px solid var(--gray-100);
+    padding-top: 10px; margin-top: 4px;
+  }
+  .desc-toggle {
+    display: inline-block; margin-top: 6px;
+    font-size: 12px; color: var(--navy);
+    cursor: pointer; font-weight: 600;
+    background: none; border: none;
+    font-family: var(--font); padding: 0;
+  }
+  .desc-toggle:hover { text-decoration: underline; }
+  .desc-text { display: none; }
+  .desc-text.open { display: block; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--gray-600);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── LOADING ── */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 999; gap: 16px;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--gray-600); }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    text-align: center; padding: 20px;
+    font-size: 11px; color: var(--gray-400);
+    border-top: 1px solid var(--gray-200);
+    background: var(--white);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static; height: auto;
+      border-left: none; border-bottom: 1px solid var(--gray-200);
+    }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 16px; }
+    .site-header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">در حال بارگذاری داده‌ها...</div>
+</div>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-brand">
+    <div class="header-logo">آ</div>
+    <div>
+      <div class="header-title">آگاه کراودفاند</div>
+      <div class="header-sub">رصد تامین مالی جمعی فرابورس ایران</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="lbl">آخرین بروزرسانی</span>
+    <span id="lastUpdated">—</span>
+    <span id="lastUpdatedShamsi" style="color:rgba(255,255,255,.5);font-size:11px"></span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="unseen-banner" id="unseenBanner" style="display:none">
+        <span id="unseenCount"></span>
+        <button class="btn btn-outline" style="width:auto;padding:4px 10px;font-size:11px"
+                onclick="markAllSeen()">علامت‌گذاری</button>
+      </div>
+
+      <button class="btn btn-gold" onclick="exportExcel()">
+        ⬇ دانلود Excel
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">جستجو</div>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="نام طرح یا شرکت...">
+        <span class="search-icon">🔎</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">فیلترها</div>
+
+      <div class="filter-group">
+        <label>وضعیت</label>
+        <select id="filterStatus">
+          <option value="">همه وضعیت‌ها</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>پلتفرم / دامنه</label>
+        <select id="filterDomain">
+          <option value="">همه پلتفرم‌ها</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>تاریخ شروع — از / تا (شمسی)</label>
+        <div class="filter-row">
+          <input type="text" id="startFrom" placeholder="۱۴۰۳-۰۱-۰۱">
+          <input type="text" id="startTo"   placeholder="۱۴۰۵-۱۲-۲۹">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>تاریخ پایان — از / تا (شمسی)</label>
+        <div class="filter-row">
+          <input type="text" id="endFrom" placeholder="۱۴۰۳-۰۱-۰۱">
+          <input type="text" id="endTo"   placeholder="۱۴۰۵-۱۲-۲۹">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="check-label">
+          <input type="checkbox" id="onlyNew">
+          فقط طرح‌های جدید
+        </label>
+      </div>
+
+      <button class="btn btn-outline" onclick="resetFilters()">پاک کردن فیلترها</button>
+    </div>
+
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">کل پروژه‌ها</div>
+        <div class="kpi-val" id="kpiTotal">—</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">پروژه‌های فعال</div>
+        <div class="kpi-val" id="kpiActive">—</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">طرح‌های جدید</div>
+        <div class="kpi-val" id="kpiNew">—</div>
+      </div>
+      <div class="kpi-card ts">
+        <div class="kpi-label">زمان بارگذاری</div>
+        <div class="kpi-val" id="kpiTime">—</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <span class="result-pill" id="resultPill">—</span>
+      <div class="pagination">
+        <button id="btnPrev" onclick="changePage(-1)">قبلی ◀</button>
+        <span class="page-info" id="pageInfo">—</span>
+        <button id="btnNext" onclick="changePage(1)">▶ بعدی</button>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div id="cardsContainer"></div>
+
+    <!-- Bottom pagination -->
+    <div class="toolbar" style="margin-top:16px">
+      <div></div>
+      <div class="pagination">
+        <button id="btnPrev2" onclick="changePage(-1)">قبلی ◀</button>
+        <span class="page-info" id="pageInfo2">—</span>
+        <button id="btnNext2" onclick="changePage(1)">▶ بعدی</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  آگاه کراودفاند | گروه آگاه | داده‌ها از ifb.ir | agahcrowdfund.ir
+</footer>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────────
+const PAGE_SIZE    = 50;
+const ACTIVE_STATUS = 'آغاز جمع آوری وجوه';
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let allProjects = [];
+let filtered    = [];
+let currentPage = 1;
+// Track which project_ids have been "seen" in this browser session
+let seenIds = new Set(JSON.parse(localStorage.getItem('seenIds') || '[]'));
+
+// ── Shamsi / Tehran helpers ────────────────────────────────────────────────────
+function toTehranTime(isoStr) {
+  if (!isoStr) return null;
+  // Parse the UTC timestamp
+  const d = new Date(isoStr.endsWith('Z') ? isoStr : isoStr + 'Z');
+  if (isNaN(d)) return null;
+  // Tehran is UTC+3:30
+  const tehranOffset = 3.5 * 60; // minutes
+  const utcMs = d.getTime();
+  const tehranMs = utcMs + tehranOffset * 60 * 1000;
+  return new Date(tehranMs);
+}
+
+function toShamsi(gregorianDate) {
+  // Converts a JS Date to a Shamsi (Jalali) date string
+  // Uses Intl.DateTimeFormat with Persian calendar
+  if (!gregorianDate) return '';
+  try {
+    const fmt = new Intl.DateTimeFormat('fa-IR', {
+      calendar: 'persian',
+      year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Tehran'
+    });
+    return fmt.format(gregorianDate);
+  } catch (e) {
+    return gregorianDate.toLocaleString();
+  }
+}
+
+function toShamsiDateOnly(gregorianDate) {
+  if (!gregorianDate) return '';
+  try {
+    const fmt = new Intl.DateTimeFormat('fa-IR', {
+      calendar: 'persian',
+      year: 'numeric', month: 'long', day: 'numeric',
+      timeZone: 'Asia/Tehran'
+    });
+    return fmt.format(gregorianDate);
+  } catch(e) { return ''; }
+}
+
+function formatFirstSeen(isoStr) {
+  const d = toTehranTime(isoStr);
+  if (!d) return '';
+  return toShamsiDateOnly(d);
+}
+
+// ── Data loading ──────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const resp = await fetch('data.json?v=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const json = await resp.json();
+
+    allProjects = json.projects || [];
+
+    // Show last updated in Tehran / Shamsi
+    const tehranDt = toTehranTime(json.last_updated);
+    if (tehranDt) {
+      document.getElementById('lastUpdated').textContent = toShamsi(tehranDt);
+    }
+
+    // KPI time display (Tehran time)
+    const now = new Date();
+    document.getElementById('kpiTime').textContent = toShamsi(now);
+
+    // Populate filter dropdowns
+    populateFilters();
+
+    // Mark projects unseen if not in seenIds
+    // (first time: all existing are "old", new ones from scraper have is_new=1)
+
+    applyFilters();
+    document.getElementById('loadingOverlay').style.display = 'none';
+
+  } catch (err) {
+    document.getElementById('loadingOverlay').innerHTML =
+      `<div style="text-align:center;color:#b91c1c;font-family:Vazirmatn,sans-serif">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <p>خطا در بارگذاری داده‌ها</p>
+        <p style="font-size:12px;color:#999;margin-top:8px">${err.message}</p>
+       </div>`;
+  }
+}
+
+// ── Populate filter dropdowns ─────────────────────────────────────────────────
+function populateFilters() {
+  const statusSel = document.getElementById('filterStatus');
+  const domainSel = document.getElementById('filterDomain');
+
+  const statuses = [...new Set(allProjects.map(p => p.status).filter(Boolean))].sort();
+  statuses.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    statusSel.appendChild(opt);
+  });
+
+  const domains = [...new Set(
+    allProjects.map(p => (p.domain || '').trim()).filter(Boolean)
+  )].sort();
+  domains.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    domainSel.appendChild(opt);
+  });
+}
+
+// ── Filter logic ──────────────────────────────────────────────────────────────
+function applyFilters() {
+  const search    = document.getElementById('searchInput').value.trim().toLowerCase();
+  const status    = document.getElementById('filterStatus').value;
+  const domain    = document.getElementById('filterDomain').value;
+  const startFrom = document.getElementById('startFrom').value.trim();
+  const startTo   = document.getElementById('startTo').value.trim();
+  const endFrom   = document.getElementById('endFrom').value.trim();
+  const endTo     = document.getElementById('endTo').value.trim();
+  const onlyNew   = document.getElementById('onlyNew').checked;
+
+  filtered = allProjects.filter(p => {
+    if (status    && p.status !== status) return false;
+    if (domain    && (p.domain || '').trim() !== domain) return false;
+    if (startFrom && (p.start_date || '') < startFrom) return false;
+    if (startTo   && (p.start_date || '') > startTo)   return false;
+    if (endFrom   && (p.end_date   || '') < endFrom)   return false;
+    if (endTo     && (p.end_date   || '') > endTo)     return false;
+    if (onlyNew   && !p.is_new) return false;
+    if (search) {
+      const hay = ((p.name || '') + ' ' + (p.company || '')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Sort: new first, then by start_date desc
+  filtered.sort((a, b) => {
+    if (b.is_new !== a.is_new) return (b.is_new || 0) - (a.is_new || 0);
+    return (b.start_date || '') < (a.start_date || '') ? -1 : 1;
+  });
+
+  currentPage = 1;
+  render();
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterStatus').value = '';
+  document.getElementById('filterDomain').value = '';
+  document.getElementById('startFrom').value = '';
+  document.getElementById('startTo').value = '';
+  document.getElementById('endFrom').value = '';
+  document.getElementById('endTo').value = '';
+  document.getElementById('onlyNew').checked = false;
+  applyFilters();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const total   = allProjects.length;
+  const active  = allProjects.filter(p => p.status === ACTIVE_STATUS).length;
+  const newCount= allProjects.filter(p => p.is_new).length;
+
+  document.getElementById('kpiTotal').textContent  = total.toLocaleString('fa');
+  document.getElementById('kpiActive').textContent = active.toLocaleString('fa');
+  document.getElementById('kpiNew').textContent    = newCount.toLocaleString('fa');
+
+  // Unseen banner
+  if (newCount > 0) {
+    document.getElementById('unseenBanner').style.display = 'flex';
+    document.getElementById('unseenCount').textContent = `${newCount} طرح جدید دیده‌نشده`;
+  } else {
+    document.getElementById('unseenBanner').style.display = 'none';
+  }
+
+  const totalFiltered = filtered.length;
+  const totalPages    = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+  currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+  document.getElementById('resultPill').textContent = `نمایش ${totalFiltered.toLocaleString('fa')} طرح از ${total.toLocaleString('fa')}`;
+
+  const pageLabel = `صفحه ${currentPage.toLocaleString('fa')} از ${totalPages.toLocaleString('fa')}`;
+  document.getElementById('pageInfo').textContent  = pageLabel;
+  document.getElementById('pageInfo2').textContent = pageLabel;
+
+  const atFirst = currentPage === 1;
+  const atLast  = currentPage === totalPages;
+  document.getElementById('btnPrev').disabled  = atFirst;
+  document.getElementById('btnNext').disabled  = atLast;
+  document.getElementById('btnPrev2').disabled = atFirst;
+  document.getElementById('btnNext2').disabled = atLast;
+
+  const slice = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const container = document.getElementById('cardsContainer');
+  if (slice.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <p>طرحی با این مشخصات پیدا نشد</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = slice.map((p, i) => buildCard(p, i)).join('');
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function buildCard(p, idx) {
+  const isNew    = !!p.is_new;
+  const isActive = p.status === ACTIVE_STATUS;
+  const domain   = (p.domain || '').trim();
+  const href     = domain ? (domain.startsWith('http') ? domain : 'https://' + domain) : '';
+
+  // Strip HTML from description
+  const descRaw  = (p.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const descShort = descRaw.length > 250 ? descRaw.slice(0, 250) + '...' : descRaw;
+  const hasMore  = descRaw.length > 250;
+
+  // first_seen in Shamsi
+  const firstSeenShamsi = p.first_seen ? formatFirstSeen(p.first_seen) : '';
+
+  const cardCls    = isNew ? 'card is-new' : 'card';
+  const statusCls  = isActive ? 's-active' : 's-other';
+  const newBadge   = isNew ? '<span class="badge-new">✦ جدید</span>' : '';
+  const domainTag  = href
+    ? `<span class="meta-item">🌐 <a href="${esc(href)}" target="_blank" rel="noopener">${esc(domain)}</a></span>`
+    : '';
+  const firstSeenTag = firstSeenShamsi
+    ? `<span class="meta-item">📥 اضافه شده: ${firstSeenShamsi}</span>`
+    : '';
+
+  const descHtml = descRaw ? `
+    <div class="card-desc">
+      <span class="desc-short">${esc(descShort)}</span>
+      ${hasMore ? `
+        <span class="desc-text" id="desc-${idx}">${esc(descRaw)}</span>
+        <button class="desc-toggle" onclick="toggleDesc(${idx}, this)">بیشتر ▾</button>
+      ` : ''}
+    </div>` : '';
+
+  return `
+<div class="${cardCls}">
+  <div class="card-header">
+    <div class="card-title-row">
+      ${newBadge}
+      <span class="card-title">${esc(p.name)}</span>
+    </div>
+    <span class="badge-status ${statusCls}">${esc(p.status)}</span>
+  </div>
+  <div class="card-meta">
+    <span class="meta-item">🏢 ${esc(p.company)}</span>
+    <span class="meta-item">🆔 ${esc(p.national_id)}</span>
+    <span class="meta-item">📅 ${esc(p.start_date)} — ${esc(p.end_date)}</span>
+    ${domainTag}
+    ${firstSeenTag}
+  </div>
+  ${descHtml}
+</div>`;
+}
+
+function toggleDesc(idx, btn) {
+  const el = document.getElementById('desc-' + idx);
+  const shortEl = el.previousElementSibling;
+  if (el.classList.contains('open')) {
+    el.classList.remove('open');
+    shortEl.style.display = '';
+    btn.textContent = 'بیشتر ▾';
+  } else {
+    el.classList.add('open');
+    shortEl.style.display = 'none';
+    btn.textContent = 'کمتر ▴';
+  }
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+function changePage(dir) {
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  currentPage = Math.max(1, Math.min(currentPage + dir, totalPages));
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Mark all seen ──────────────────────────────────────────────────────────────
+function markAllSeen() {
+  allProjects.forEach(p => { p.is_new = 0; });
+  applyFilters();
+}
+
+// ── Excel Export ──────────────────────────────────────────────────────────────
+function exportExcel() {
+  const rows = allProjects.map(p => ({
+    'شناسه':        p.project_id || '',
+    'نام طرح':      p.name || '',
+    'شرکت':         p.company || '',
+    'شناسه ملی':    p.national_id || '',
+    'پلتفرم':       p.domain || '',
+    'وضعیت':        p.status || '',
+    'تاریخ شروع':   p.start_date || '',
+    'تاریخ پایان':  p.end_date || '',
+    'اضافه شده':    p.first_seen ? p.first_seen.slice(0, 10) : '',
+    'توضیحات':      (p.description || '').replace(/<[^>]+>/g, ' ').trim(),
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  // Set RTL column widths
+  ws['!cols'] = [
+    {wch:8},{wch:40},{wch:25},{wch:15},{wch:20},
+    {wch:20},{wch:12},{wch:12},{wch:12},{wch:60}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'IFB Projects');
+
+  const today = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `ifb_projects_${today}.xlsx`);
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
+document.getElementById('filterStatus').addEventListener('change', applyFilters);
+document.getElementById('filterDomain').addEventListener('change', applyFilters);
+document.getElementById('startFrom').addEventListener('input', debounce(applyFilters, 500));
+document.getElementById('startTo').addEventListener('input',   debounce(applyFilters, 500));
+document.getElementById('endFrom').addEventListener('input',   debounce(applyFilters, 500));
+document.getElementById('endTo').addEventListener('input',     debounce(applyFilters, 500));
+document.getElementById('onlyNew').addEventListener('change',  applyFilters);
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
