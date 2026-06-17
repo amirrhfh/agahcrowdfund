@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>آگاه کراودفاند — رصد تامین مالی جمعی فرابورس</title>
+<title> AGAH Crowd - MarketWatch </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- SheetJS for Excel export -->
@@ -357,7 +357,7 @@
   <div class="header-brand">
     <div class="header-logo">آ</div>
     <div>
-      <div class="header-title">آگاه کراودفاند</div>
+      <div class="header-title">تابلوی تامین مالی جمعی</div>
       <div class="header-sub">رصد تامین مالی جمعی فرابورس ایران</div>
     </div>
   </div>
@@ -797,8 +797,15 @@ function markAllSeen() {
   applyFilters();
 }
 
-// ── Excel Export ──────────────────────────────────────────────────────────────
+// ── Excel Export (با درخواست رمز عبور) ───────────────────────────────────────
 function exportExcel() {
+  const password = prompt("برای دانلود فایل Excel، لطفاً رمز عبور را وارد کنید:");
+  
+  if (password !== "agah1405") {
+    alert("رمز عبور اشتباه است. دانلود متوقف شد.");
+    return;
+  }
+
   const rows = allProjects.map(p => ({
     'شناسه':        p.project_id || '',
     'نام طرح':      p.name || '',
@@ -813,7 +820,6 @@ function exportExcel() {
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
-  // Set RTL column widths
   ws['!cols'] = [
     {wch:8},{wch:40},{wch:25},{wch:15},{wch:20},
     {wch:20},{wch:12},{wch:12},{wch:12},{wch:60}
@@ -824,7 +830,6 @@ function exportExcel() {
   const today = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `ifb_projects_${today}.xlsx`);
 }
-
 // ── Event listeners ───────────────────────────────────────────────────────────
 document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
 document.getElementById('filterStatus').addEventListener('change', applyFilters);
